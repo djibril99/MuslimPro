@@ -1,8 +1,8 @@
 plugins {
-    alias(libs.plugins.com.android.application)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
+    //alias(libs.plugins.com.android.application)
+    //alias(libs.plugins.org.jetbrains.kotlin.android)
 }
-
+/*
 android {
     namespace = "com.example.muslimpro"
     compileSdk = 33
@@ -47,6 +47,17 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+*/
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.0")
+    }
+
 }
 
 dependencies {
