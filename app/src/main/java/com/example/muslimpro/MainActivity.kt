@@ -4,7 +4,6 @@ package com.example.muslimpro
 import android.app.TimePickerDialog
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -129,7 +128,7 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             var enabled by remember { mutableStateOf(true) }//{ mutableStateOf(alarm.enabled) }
 
             var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-            var validated by remember { mutableStateOf(false) }
+            //var validated by remember { mutableStateOf(false) }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -160,33 +159,28 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
                     Icon(Icons.Default.Delete, contentDescription = "Delete")
                 }
             }
-            if (selectedAlarm != null && validated) {
+            if (selectedAlarm != null) {
                 val context = LocalContext.current
-                //recuperer le temps de l'alarm selectionnée
                 val timeselected = LocalTime.parse(selectedAlarm!!.time, DateTimeFormatter.ofPattern("HH:mm"))
 
-                // Afficher le TimePickerDialog et mettre à jour la variable "selectedTime" en conséquence
                 TimePickerDialog(
                     context,
                     { _, hour, minute ->
                         selectedTime = LocalTime.of(hour, minute)
-                        validated = true // définir validated à true lorsque l'utilisateur valide l'heure
+                        selectedAlarm?.let {
+                            it.time = selectedTime.toString()
+                            onAlarmUpdate(it)
+                        }
+                        selectedAlarm = null
                     },
                     timeselected.hour,
                     timeselected.minute,
                     true
                 ).show()
-                if (validated) {
-                    selectedAlarm!!.time = selectedTime.toString()
-                    onAlarmUpdate(selectedAlarm!!)
-                    validated = false
-                }
+                //selectedAlarm = null
 
             }
-            else{
-                validated=false
-                selectedAlarm=null
-            }
+
 
         }
     }
@@ -198,9 +192,19 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
-    var showAddDialog by remember { mutableStateOf(false) }
     var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-    var validated by remember { mutableStateOf(false) }
+
+
+    val timePickerDialog = TimePickerDialog(
+            LocalContext.current,
+            { _, hour, minute ->
+                selectedTime = LocalTime.of(hour, minute)
+                onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+            },
+            selectedTime.hour,
+            selectedTime.minute,
+            true
+        )
 
     Box(
         contentAlignment = Alignment.BottomEnd,
@@ -210,40 +214,18 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
     ) {
         FloatingActionButton(
             onClick = {
-                validated = false // initialiser la variable validated à false
-                showAddDialog = true
+                timePickerDialog.show()
             },
             modifier = Modifier.align(Alignment.BottomEnd)
         ) {
             Icon(
                 Icons.Default.Add,
-                contentDescription = "Terajoule une alarme"
+                contentDescription = "Ajouter une alarme"
             )
-        }
-
-        if (showAddDialog) {
-            val context = LocalContext.current
-
-            // Afficher le TimePickerDialog et mettre à jour la variable "selectedTime" en conséquence
-            TimePickerDialog(
-                context,
-                { _, hour, minute ->
-                    selectedTime = LocalTime.of(hour, minute)
-                    validated = true // définir validated à true lorsque l'utilisateur valide l'heure
-                },
-                selectedTime.hour,
-                selectedTime.minute,
-                true
-            ).show()
-            // Masquer le dialog
-            showAddDialog = false
-        }
-        if (validated) {
-            onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-            validated=false
         }
     }
 }
+
 /*
 @Preview(showBackground = true)
 @Composable
