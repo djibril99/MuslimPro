@@ -2,8 +2,15 @@ package com.example.muslimpro
 
 
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
+import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -35,8 +42,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 data class Alarm(val id: Int, var time: String)
 class MainActivity : ComponentActivity() {
@@ -187,24 +196,28 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
 
 }
 
-
-//@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
     var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-
-
+    var sonner  by remember { mutableStateOf(false) }
     val timePickerDialog = TimePickerDialog(
-            LocalContext.current,
-            { _, hour, minute ->
-                selectedTime = LocalTime.of(hour, minute)
-                onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-            },
-            selectedTime.hour,
-            selectedTime.minute,
-            true
-        )
+        LocalContext.current,
+        { _, hour, minute ->
+            selectedTime = LocalTime.of(hour, minute)
+            onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+
+            sonner=true
+        },
+        selectedTime.hour,
+        selectedTime.minute,
+        true
+    )
+    if(sonner){
+        sonner=false
+        //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+        playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
+    }
 
     Box(
         contentAlignment = Alignment.BottomEnd,
@@ -226,11 +239,40 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
     }
 }
 
-/*
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    MuslimProTheme {
-    }
+fun setAlarm(time: String) {
+    val intent = Intent(AlarmClock.ACTION_SET_ALARM)
+        .putExtra(AlarmClock.EXTRA_HOUR, time.substring(0, 2).toInt())
+        .putExtra(AlarmClock.EXTRA_MINUTES, time.substring(3, 5).toInt())
+    LocalContext.current.startActivity(intent)
 }
-*/
+private var mediaPlayer: MediaPlayer? = null
+
+fun playRingtoneAtTime(context: Context, hour: Int, minute: Int) {
+    val now = Calendar.getInstance()
+    val targetTime = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    // Si l'heure ciblée est dans le passé, on ajoute un jour pour programmer la sonnerie le lendemain
+    if (targetTime.timeInMillis < now.timeInMillis) {
+        targetTime.add(Calendar.DAY_OF_YEAR, 1)
+    }
+
+    val delay = targetTime.timeInMillis - now.timeInMillis
+    Handler(Looper.getMainLooper()).postDelayed({
+        mediaPlayer = MediaPlayer.create(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+        mediaPlayer?.isLooping = true
+        mediaPlayer?.start()
+    }, delay)
+
+}
+fun stopRingtone() {
+    mediaPlayer?.stop()
+    mediaPlayer?.release()
+    mediaPlayer = null
+}
+
