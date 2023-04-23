@@ -96,16 +96,16 @@ fun MyScreenContent() {
         mutableStateOf(
             listOf(
                 Alarm(id = 1, time = "22:00",enabled = true),
-                Alarm(id = 2, time = "16:00",enabled = true),
+                Alarm(id = 2, time = "16:00",enabled = false),
                 Alarm(id = 3, time = "18:00",enabled = true)
             )
         )
     }
 
-    val now = Calendar.getInstance()
-
+    var now = Calendar.getInstance()
+    // filtrer les alarms qui ne seront pas pas declanchés et les trier dans l'ordre croissant
     var filteredAlarms = alarmList.filter { alarm ->
-        val alarmTime = Calendar.getInstance().apply {
+        var alarmTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
             set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
         }
