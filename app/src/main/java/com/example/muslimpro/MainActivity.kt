@@ -47,7 +47,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
-data class Alarm(val id: Int, var time: String)
+data class Alarm(val id: Int, var time: String , var enabled:Boolean = true)
 class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -134,7 +134,7 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
         contentPadding = PaddingValues(top = 16.dp)
     ) {
         items(alarms) { alarm ->
-            var enabled by remember { mutableStateOf(true) }//{ mutableStateOf(alarm.enabled) }
+            var enabled by remember { mutableStateOf(alarm.enabled ) }//{ mutableStateOf(alarm.enabled) }
 
             var selectedTime by remember { mutableStateOf(LocalTime.now()) }
             //var validated by remember { mutableStateOf(false) }
@@ -154,7 +154,11 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             ) {
                 Switch(
                     checked = enabled,
-                    onCheckedChange = { enabled = it },
+                    onCheckedChange = {
+                                        enabled = it
+                                        alarm.enabled= enabled
+                                        onAlarmUpdate(alarm)
+                                      },
                     modifier = Modifier.padding(end = 16.dp)
                 )
                 Text(
@@ -216,7 +220,8 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
     if(sonner){
         sonner=false
         //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-        playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
+        //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
+        playAudioAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute,"audio.mpeg")
     }
 
     Box(
@@ -270,9 +275,35 @@ fun playRingtoneAtTime(context: Context, hour: Int, minute: Int) {
     }, delay)
 
 }
+
 fun stopRingtone() {
     mediaPlayer?.stop()
     mediaPlayer?.release()
     mediaPlayer = null
+}
+
+fun playAudioAtTime(context: Context, hour: Int, minute: Int, audioFileName: String) {
+    val now = Calendar.getInstance()
+    val targetTime = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    // Si l'heure ciblée est dans le passé, on ajoute un jour pour programmer la lecture audio le lendemain
+    if (targetTime.timeInMillis < now.timeInMillis) {
+        targetTime.add(Calendar.DAY_OF_YEAR, 1)
+    }
+
+    val delay = targetTime.timeInMillis - now.timeInMillis
+    Handler(Looper.getMainLooper()).postDelayed({
+        //val audioResourceId = context.resources.getIdentifier(audioFileName, "raw", context.packageName)
+        //val mediaPlayer = MediaPlayer.create(context, audioResourceId)
+        var mediaPlayer = MediaPlayer.create(context, R.raw.audio)
+        //mediaPlayer.start();
+        //mediaPlayer?.isLooping = true
+        mediaPlayer?.start()
+    }, delay)
 }
 
