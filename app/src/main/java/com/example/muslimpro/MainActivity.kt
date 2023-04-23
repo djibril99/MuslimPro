@@ -91,14 +91,33 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyScreenContent() {
+    var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
     var alarmList by remember {
         mutableStateOf(
             listOf(
-                Alarm(id = 1, time = "08:00"),
-                Alarm(id = 2, time = "12:00"),
-                Alarm(id = 3, time = "18:00")
+                Alarm(id = 1, time = "22:00",enabled = true),
+                Alarm(id = 2, time = "16:00",enabled = true),
+                Alarm(id = 3, time = "18:00",enabled = true)
             )
         )
+    }
+
+    val now = Calendar.getInstance()
+
+    var filteredAlarms = alarmList.filter { alarm ->
+        val alarmTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
+            set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
+        }
+        alarmTime >= now
+    }
+    if(filteredAlarms.isNotEmpty()) {
+        currentAlarm = filteredAlarms[0]
+
+        if (currentAlarm!!.enabled) {
+            var selectedTime = LocalTime.parse(currentAlarm!!.time)
+            playAudioAtTime(LocalContext.current, selectedTime.hour, selectedTime.minute)
+        }
     }
     Column(
         modifier = Modifier.padding(16.dp)
@@ -106,7 +125,9 @@ fun MyScreenContent() {
         Text(text = "Liste des alarmes")
 
         AlarmList(
-            alarms = alarmList,
+            alarms = alarmList.sortedBy { LocalTime.parse(it.time) },
+            //alarms = filteredAlarms.sortedBy { LocalTime.parse(it.time) },
+
             onAlarmDelete = { alarm ->
                 alarmList = alarmList.filter { it.id != alarm.id }
             },
@@ -221,7 +242,7 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
         sonner=false
         //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
         //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
-        playAudioAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute,"audio.mpeg")
+        //playAudioAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute,"audio.mpeg")
     }
 
     Box(
@@ -282,7 +303,7 @@ fun stopRingtone() {
     mediaPlayer = null
 }
 
-fun playAudioAtTime(context: Context, hour: Int, minute: Int, audioFileName: String) {
+fun playAudioAtTime(context: Context, hour: Int, minute: Int) {
     val now = Calendar.getInstance()
     val targetTime = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, hour)
