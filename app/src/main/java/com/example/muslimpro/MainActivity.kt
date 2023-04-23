@@ -298,11 +298,7 @@ fun playAudioAtTime(context: Context, hour: Int, minute: Int, audioFileName: Str
 
     val delay = targetTime.timeInMillis - now.timeInMillis
     Handler(Looper.getMainLooper()).postDelayed({
-        //val audioResourceId = context.resources.getIdentifier(audioFileName, "raw", context.packageName)
-        //val mediaPlayer = MediaPlayer.create(context, audioResourceId)
         var mediaPlayer = MediaPlayer.create(context, R.raw.audio)
-        //mediaPlayer.start();
-        //mediaPlayer?.isLooping = true
         mediaPlayer?.start()
     }, delay)
 }
