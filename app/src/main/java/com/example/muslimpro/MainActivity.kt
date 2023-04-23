@@ -233,7 +233,7 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
         ) {
             Icon(
                 Icons.Default.Add,
-                contentDescription = "Ajouter une alarme"
+                contentDescription = "Ajouter une alarme!"
             )
         }
     }
