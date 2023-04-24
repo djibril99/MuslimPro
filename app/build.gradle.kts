@@ -91,7 +91,12 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core:1.1.0")
     implementation("androidx.compose.material:material-icons-extended:1.1.0")
 
-    //pour l horloge
+    //pour la base de donnée
+    implementation("androidx.sqlite:sqlite:2.2.0")
 
+    //def room_version = "2.4.0"
+
+    //implementation("androidx.room:room-runtime:$room_version")
+    //kapt("androidx.room:room-compiler:$room_version")
 
 }

@@ -46,9 +46,9 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
-
 data class Alarm(val id: Int, var time: String , var enabled:Boolean = true)
 class MainActivity : ComponentActivity() {
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +93,7 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 fun MyScreenContent() {
     var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
     //recuperer la liste des alarm depuis la base de donnnées
+/*
     var alarmList by remember {
         mutableStateOf(
             listOf(
@@ -102,11 +103,20 @@ fun MyScreenContent() {
             )
         )
     }
-// gestion de la sonnerie
+*/
+    var database : Database = Database(LocalContext.current)
+
+    var alarmList by remember {
+        mutableStateOf(
+                database.getAllAlarms()
+        )
+    }
+
+    // gestion de la sonnerie
     val now = Calendar.getInstance()
     // filtrer les alarms qui ne seront pas pas declanchés et les trier dans l'ordre croissant
-    val filteredAlarms = alarmList.filter { alarm ->
-        val alarmTime = Calendar.getInstance().apply {
+    var filteredAlarms = alarmList.filter { alarm ->
+        var alarmTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
             set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
         }
@@ -126,24 +136,28 @@ fun MyScreenContent() {
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
+
         Text(text = "Liste des alarmes")
 
         AlarmList(
             alarms = alarmList.sortedBy { LocalTime.parse(it.time) },
-            //alarms = filteredAlarms.sortedBy { LocalTime.parse(it.time) },
 
             onAlarmDelete = { alarm ->
                 alarmList = alarmList.filter { it.id != alarm.id }
+                database.deleteAlarm(alarm.id)
             },
             onAlarmUpdate = { updatedAlarm ->
                 alarmList = alarmList.map { alarm ->
                     if (alarm.id == updatedAlarm.id) updatedAlarm else alarm
                 }
+                database.updateAlarm(updatedAlarm)
 
             }
         )
         AddAlarmButton(onAddAlarm = { time ->
-            alarmList = alarmList + Alarm(id = alarmList.size + 1, time = time)
+                val newAlarm = database.addAlarm(time)
+                alarmList = alarmList + newAlarm
+
         })
     }
 }
@@ -162,7 +176,6 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             var enabled by remember { mutableStateOf(alarm.enabled ) }//{ mutableStateOf(alarm.enabled) }
 
             var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-            //var validated by remember { mutableStateOf(false) }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -200,23 +213,23 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             if (selectedAlarm != null) {
                 val context = LocalContext.current
                 val timeselected = LocalTime.parse(selectedAlarm!!.time, DateTimeFormatter.ofPattern("HH:mm"))
+                var newAlarm =selectedAlarm
 
                 TimePickerDialog(
                     context,
                     { _, hour, minute ->
                         selectedTime = LocalTime.of(hour, minute)
-                        selectedAlarm?.let {
+                        newAlarm?.let {
                             it.time = selectedTime.toString()
                             onAlarmUpdate(it)
                         }
-                        selectedAlarm = null
                     },
                     timeselected.hour,
                     timeselected.minute,
                     true
                 ).show()
-                //selectedAlarm = null
 
+                selectedAlarm = null
             }
 
 
