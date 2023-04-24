@@ -92,6 +92,7 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 @Composable
 fun MyScreenContent() {
     var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
+    //recuperer la liste des alarm depuis la base de donnnées
     var alarmList by remember {
         mutableStateOf(
             listOf(
@@ -101,24 +102,27 @@ fun MyScreenContent() {
             )
         )
     }
-
-    var now = Calendar.getInstance()
+// gestion de la sonnerie
+    val now = Calendar.getInstance()
     // filtrer les alarms qui ne seront pas pas declanchés et les trier dans l'ordre croissant
-    var filteredAlarms = alarmList.filter { alarm ->
-        var alarmTime = Calendar.getInstance().apply {
+    val filteredAlarms = alarmList.filter { alarm ->
+        val alarmTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
             set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
         }
         alarmTime >= now
     }
     if(filteredAlarms.isNotEmpty()) {
-        currentAlarm = filteredAlarms[0]
-
+        currentAlarm = filteredAlarms.sortedBy{ LocalTime.parse(it.time) }[0]
         if (currentAlarm!!.enabled) {
-            var selectedTime = LocalTime.parse(currentAlarm!!.time)
+            val selectedTime = LocalTime.parse(currentAlarm!!.time)
             playAudioAtTime(LocalContext.current, selectedTime.hour, selectedTime.minute)
+            //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+            //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
         }
     }
+
+    // mise en page de l application
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
@@ -225,25 +229,17 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
 @Composable
 fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
     var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-    var sonner  by remember { mutableStateOf(false) }
     val timePickerDialog = TimePickerDialog(
         LocalContext.current,
         { _, hour, minute ->
             selectedTime = LocalTime.of(hour, minute)
             onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
 
-            sonner=true
         },
         selectedTime.hour,
         selectedTime.minute,
         true
     )
-    if(sonner){
-        sonner=false
-        //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-        //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
-        //playAudioAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute,"audio.mpeg")
-    }
 
     Box(
         contentAlignment = Alignment.BottomEnd,
