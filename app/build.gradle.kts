@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    id("org.jetbrains.kotlin.kapt") version "1.5.31"
 }
 
 android{
@@ -92,11 +93,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.1.0")
 
     //pour la base de donnée
-    implementation("androidx.sqlite:sqlite:2.2.0")
+    implementation("androidx.sqlite:sqlite:2.3.1")
 
-    //def room_version = "2.4.0"
 
-    //implementation("androidx.room:room-runtime:$room_version")
-    //kapt("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-runtime:2.4.0")
+    kapt("androidx.room:room-compiler:2.4.0")
 
 }
