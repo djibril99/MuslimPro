@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    kotlin("kapt") version "1.5.31"
 }
 
 android{
@@ -93,5 +94,8 @@ dependencies {
 
     //pour l horloge
 
+    // Pour la base de donnees
+    implementation("androidx.room:room-runtime:2.5.0")
+    kapt("androidx.room:room-compiler:2.5.0")
 
 }
