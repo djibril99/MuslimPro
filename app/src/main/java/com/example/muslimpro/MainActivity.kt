@@ -3,17 +3,15 @@ package com.example.muslimpro
 
 import android.app.TimePickerDialog
 import android.content.Context
-import android.content.Intent
 import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,7 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -40,14 +37,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+
 
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
-import androidx.compose.ui.res.vectorResource
 
 class MainActivity : ComponentActivity() {
 
@@ -77,13 +75,17 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp(content: @Composable (PaddingValues) -> Unit) {
+    val myImage = painterResource(R.drawable.ic_launcher_background)
     MaterialTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
                     navigationIcon = {
                         IconButton(onClick = {}) {
-                            Icon(Icons.Default.Menu, contentDescription = null)
+                            Image(
+                                painter = myImage,
+                                contentDescription = null
+                            )
                         }
                     },
                     title = { Text(text = stringResource(R.string.app_name)) },
@@ -94,12 +96,13 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
     }
 }
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyScreenContent() {
     var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
     //INSTANCE DE LA ABSE DE DONNEE
-    var database : Database = Database(LocalContext.current)
+    val database  = Database(LocalContext.current)
     //recuperer la liste des alarm depuis la base de donnnées
     var alarmList by remember {
         mutableStateOf(
@@ -110,8 +113,8 @@ fun MyScreenContent() {
     // gestion de la sonnerie
     val now = Calendar.getInstance()
     // filtrer les alarms qui ne seront pas pas declanchés et les trier dans l'ordre croissant
-    var filteredAlarms = alarmList.filter { alarm ->
-        var alarmTime = Calendar.getInstance().apply {
+    val filteredAlarms = alarmList.filter { alarm ->
+        val alarmTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
             set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
         }
@@ -122,10 +125,8 @@ fun MyScreenContent() {
         if (currentAlarm!!.enabled) {
             val selectedTime = LocalTime.parse(currentAlarm!!.time)
             playAudioAtTime(LocalContext.current, selectedTime.hour, selectedTime.minute)
-            //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
         }
     }
-
     // mise en page de l application
     Column(
         modifier = Modifier.padding(16.dp)
@@ -151,13 +152,16 @@ fun MyScreenContent() {
         AddAlarmButton(onAddAlarm = { time ->
                 val newAlarm = database.addAlarm(time)
                 alarmList = alarmList + newAlarm
+            //supprimer ceci
+
+
 
         })
     }
 }
 // la liste des Alarmes , pour chaqu'un lorsque la ligne est selectionner , une boite de dialogue s'ouvre pour la modification
 // et lorsque l'icon de poubelle est appuyée, l'alarme sera supprimer
-// le switch nous permettra d activiter ou de desactiver l'alarme
+// le switch nous permettra d act  viter ou de desactiver l'alarme
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -209,7 +213,7 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             if (selectedAlarm != null) {
                 val context = LocalContext.current
                 val timeselected = LocalTime.parse(selectedAlarm!!.time, DateTimeFormatter.ofPattern("HH:mm"))
-                var newAlarm =selectedAlarm
+                val newAlarm =selectedAlarm
 
                 TimePickerDialog(
                     context,
@@ -295,8 +299,12 @@ fun playAudioAtTime(context: Context, hour: Int, minute: Int) {
 
     val delay = targetTime.timeInMillis - now.timeInMillis
     Handler(Looper.getMainLooper()).postDelayed({
-        var mediaPlayer = MediaPlayer.create(context, R.raw.audio)
+        val mediaPlayer = MediaPlayer.create(context, R.raw.audio)
         mediaPlayer?.start()
+
+        val message = "Il est $hour:$minute ! \n c'est l'heure d'aller Prier";
+        val createNotification = CreateNotification(context, "Heure de Prierre", message)
+        createNotification.showNotification(mediaPlayer)
     }, delay)
 }
 
