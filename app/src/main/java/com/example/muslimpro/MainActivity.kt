@@ -30,25 +30,25 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import com.example.muslimpro.ui.theme.MuslimProTheme
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.lifecycle.ViewModelProvider
+import com.example.muslimpro.ui.theme.MuslimProTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
-data class Alarm(val id: Int, var time: String , var enabled:Boolean = true)
-class MainActivity : ComponentActivity() {
 
+class MainActivity : ComponentActivity() {
+    private lateinit var viewModel: AlarmViewModel
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +62,11 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
+                    // Initialize the view model
+                    viewModel = ViewModelProvider(this)[AlarmViewModel::class.java]
+
                     MyApp {
+//                        MyScreenContent(viewModel.alarms)
                         MyScreenContent()
                     }
                 }
@@ -90,9 +94,11 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
+//fun MyScreenContent(alarms: List<Alarm>) {
 fun MyScreenContent() {
     var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
-    //recuperer la liste des alarm depuis la base de donnnées
+//    var alarmList by remember { mutableStateOf(emptyList<Alarm>()) }
+    //recuperer la liste des alarm depuis la base de données
 /*
     var alarmList by remember {
         mutableStateOf(
@@ -104,11 +110,15 @@ fun MyScreenContent() {
         )
     }
 */
-    var database : Database = Database(LocalContext.current)
+    var database = Database(LocalContext.current)
+//    val alarmDao = AlarmDatabase.getInstance(context = LocalContext.current).alarmDao()
+//    var data = AlarmRepository(alarmDao = alarmDao, context = LocalContext.current)
+
 
     var alarmList by remember {
         mutableStateOf(
                 database.getAllAlarms()
+//                data.getAlarms()
         )
     }
 
@@ -156,6 +166,7 @@ fun MyScreenContent() {
         )
         AddAlarmButton(onAddAlarm = { time ->
                 val newAlarm = database.addAlarm(time)
+//            val newAlarm = data.addAlarm(time)
                 alarmList = alarmList + newAlarm
 
         })

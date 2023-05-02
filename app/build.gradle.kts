@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
     implementation(libs.material3)
+    implementation(libs.androidx.room.common)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -96,7 +97,9 @@ dependencies {
     implementation("androidx.sqlite:sqlite:2.3.1")
 
 
-    implementation("androidx.room:room-runtime:2.4.0")
-    kapt("androidx.room:room-compiler:2.4.0")
+    implementation("androidx.room:room-runtime:2.5.1")
+    implementation("androidx.room:room-rxjava2:2.5.1")
+    implementation("androidx.room:room-ktx:2.5.1")
+    kapt("androidx.room:room-compiler:2.5.1")
 
 }
