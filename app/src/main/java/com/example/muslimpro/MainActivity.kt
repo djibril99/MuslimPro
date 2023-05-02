@@ -304,7 +304,7 @@ fun playAudioAtTime(context: Context, hour: Int, minute: Int) {
 
         val message = "Il est $hour:$minute ! \n c'est l'heure d'aller Prier";
         val createNotification = CreateNotification(context, "Heure de Prierre", message)
-        createNotification.showNotification(mediaPlayer)
+        createNotification.showNotification()
     }, delay)
 }
 

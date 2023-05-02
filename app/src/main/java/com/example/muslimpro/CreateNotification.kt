@@ -23,7 +23,7 @@ class CreateNotification(
     lateinit var notificationChannel: NotificationChannel
     lateinit var notificationBuilder: NotificationCompat.Builder
 
-    fun showNotification(mediaPlayer: MediaPlayer){
+    fun showNotification(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             notificationChannel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(notificationChannel)
