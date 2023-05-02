@@ -19,7 +19,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -68,31 +72,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyApp(content: @Composable (PaddingValues) -> Unit) {
-    val myImage = painterResource(R.drawable.ic_launcher_background)
-    MaterialTheme {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(onClick = {}) {
-                            Image(
-                                painter = myImage,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    title = { Text(text = stringResource(R.string.app_name)) },
-                )
-            },
-            content = content
-        )
     }
 }
 
@@ -132,7 +111,7 @@ fun MyScreenContent() {
         modifier = Modifier.padding(16.dp)
     ) {
 
-        Text(text = "Liste des alarmes")
+        //Text(text = "Liste des alarmes")
 
         AlarmList(
             alarms = alarmList.sortedBy { LocalTime.parse(it.time) },
@@ -152,14 +131,40 @@ fun MyScreenContent() {
         AddAlarmButton(onAddAlarm = { time ->
                 val newAlarm = database.addAlarm(time)
                 alarmList = alarmList + newAlarm
-            //supprimer ceci
-
-
-
         })
     }
 }
+
+
 // la liste des Alarmes , pour chaqu'un lorsque la ligne est selectionner , une boite de dialogue s'ouvre pour la modification
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyApp(content: @Composable (PaddingValues) -> Unit) {
+    val myImage = painterResource(R.drawable.mosqueenormale)
+    MaterialTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Image(
+                                painter = myImage,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    title = {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                fontFamily = FontFamily.Serif
+                            )
+                            },
+                )
+            },
+            content = content
+        )
+    }
+}
 // et lorsque l'icon de poubelle est appuyée, l'alarme sera supprimer
 // le switch nous permettra d act  viter ou de desactiver l'alarme
 
@@ -228,7 +233,6 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
                     timeselected.minute,
                     true
                 ).show()
-
                 selectedAlarm = null
             }
 
@@ -248,7 +252,6 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
         { _, hour, minute ->
             selectedTime = LocalTime.of(hour, minute)
             onAddAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-
         },
         selectedTime.hour,
         selectedTime.minute,
@@ -260,12 +263,19 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .size(48.dp)
+            .height(48.dp)
+            .width(48.dp)
     ) {
         FloatingActionButton(
             onClick = {
                 timePickerDialog.show()
             },
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(48.dp)
+                .height(48.dp)
+                .width(48.dp)
         ) {
             Icon(
                 Icons.Default.Add,

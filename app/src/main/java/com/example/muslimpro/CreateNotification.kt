@@ -33,7 +33,7 @@ class CreateNotification(
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         notificationBuilder = NotificationCompat.Builder(context, channelId)
         notificationBuilder.setSmallIcon(R.drawable.ic_launcher_background)
-        notificationBuilder.addAction(R.drawable.ic_launcher_background, "Arreter", pendingIntent)
+        //notificationBuilder.addAction(R.drawable.ic_launcher_background, "Arreter", pendingIntent)
         notificationBuilder.setContentTitle(title)
         notificationBuilder.setContentText(msg)
         //notificationBuilder.setAutoCancel(true)
