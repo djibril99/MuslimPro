@@ -3,17 +3,15 @@ package com.example.muslimpro
 
 import android.app.TimePickerDialog
 import android.content.Context
-import android.content.Intent
 import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -30,25 +28,27 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import com.example.muslimpro.ui.theme.MuslimProTheme
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelProvider
-import com.example.muslimpro.ui.theme.MuslimProTheme
+
+
+
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
-    private lateinit var viewModel: AlarmViewModel
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,11 +62,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-                    // Initialize the view model
-                    viewModel = ViewModelProvider(this)[AlarmViewModel::class.java]
-
                     MyApp {
-//                        MyScreenContent(viewModel.alarms)
                         MyScreenContent()
                     }
                 }
@@ -79,12 +75,20 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp(content: @Composable (PaddingValues) -> Unit) {
+    val myImage = painterResource(R.drawable.ic_launcher_background)
     MaterialTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-
-                    title = { Text(text = stringResource(R.string.app_name)) }
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Image(
+                                painter = myImage,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    title = { Text(text = stringResource(R.string.app_name)) },
                 )
             },
             content = content
@@ -92,41 +96,25 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
     }
 }
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-//fun MyScreenContent(alarms: List<Alarm>) {
 fun MyScreenContent() {
     var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
-//    var alarmList by remember { mutableStateOf(emptyList<Alarm>()) }
-    //recuperer la liste des alarm depuis la base de données
-/*
-    var alarmList by remember {
-        mutableStateOf(
-            listOf(
-                Alarm(id = 1, time = "22:00",enabled = true),
-                Alarm(id = 2, time = "16:00",enabled = false),
-                Alarm(id = 3, time = "18:00",enabled = true)
-            )
-        )
-    }
-*/
-    var database = Database(LocalContext.current)
-//    val alarmDao = AlarmDatabase.getInstance(context = LocalContext.current).alarmDao()
-//    var data = AlarmRepository(alarmDao = alarmDao, context = LocalContext.current)
-
-
+    //INSTANCE DE LA ABSE DE DONNEE
+    val database  = Database(LocalContext.current)
+    //recuperer la liste des alarm depuis la base de donnnées
     var alarmList by remember {
         mutableStateOf(
                 database.getAllAlarms()
-//                data.getAlarms()
         )
     }
 
     // gestion de la sonnerie
     val now = Calendar.getInstance()
     // filtrer les alarms qui ne seront pas pas declanchés et les trier dans l'ordre croissant
-    var filteredAlarms = alarmList.filter { alarm ->
-        var alarmTime = Calendar.getInstance().apply {
+    val filteredAlarms = alarmList.filter { alarm ->
+        val alarmTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, alarm.time.substringBefore(":").toInt())
             set(Calendar.MINUTE, alarm.time.substringAfter(":").toInt())
         }
@@ -137,11 +125,8 @@ fun MyScreenContent() {
         if (currentAlarm!!.enabled) {
             val selectedTime = LocalTime.parse(currentAlarm!!.time)
             playAudioAtTime(LocalContext.current, selectedTime.hour, selectedTime.minute)
-            //setAlarm(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
-            //playRingtoneAtTime(LocalContext.current, selectedTime.hour , selectedTime.minute)
         }
     }
-
     // mise en page de l application
     Column(
         modifier = Modifier.padding(16.dp)
@@ -166,13 +151,17 @@ fun MyScreenContent() {
         )
         AddAlarmButton(onAddAlarm = { time ->
                 val newAlarm = database.addAlarm(time)
-//            val newAlarm = data.addAlarm(time)
                 alarmList = alarmList + newAlarm
+            //supprimer ceci
+
+
 
         })
     }
 }
-
+// la liste des Alarmes , pour chaqu'un lorsque la ligne est selectionner , une boite de dialogue s'ouvre pour la modification
+// et lorsque l'icon de poubelle est appuyée, l'alarme sera supprimer
+// le switch nous permettra d act  viter ou de desactiver l'alarme
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -184,7 +173,7 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
         contentPadding = PaddingValues(top = 16.dp)
     ) {
         items(alarms) { alarm ->
-            var enabled by remember { mutableStateOf(alarm.enabled ) }//{ mutableStateOf(alarm.enabled) }
+            var enabled by remember { mutableStateOf(alarm.enabled ) }
 
             var selectedTime by remember { mutableStateOf(LocalTime.now()) }
 
@@ -224,7 +213,7 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
             if (selectedAlarm != null) {
                 val context = LocalContext.current
                 val timeselected = LocalTime.parse(selectedAlarm!!.time, DateTimeFormatter.ofPattern("HH:mm"))
-                var newAlarm =selectedAlarm
+                val newAlarm =selectedAlarm
 
                 TimePickerDialog(
                     context,
@@ -248,7 +237,8 @@ fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate
     }
 
 }
-
+//bouton Ajout des Alarm . une dialoge (horloge) s'ouvre lorsque celui-ci est appuyé
+//et à la validation du dialoge, une Alarm sera ajouté
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
@@ -284,38 +274,8 @@ fun AddAlarmButton(onAddAlarm: (String) -> Unit) {
         }
     }
 }
-
-@Composable
-fun setAlarm(time: String) {
-    val intent = Intent(AlarmClock.ACTION_SET_ALARM)
-        .putExtra(AlarmClock.EXTRA_HOUR, time.substring(0, 2).toInt())
-        .putExtra(AlarmClock.EXTRA_MINUTES, time.substring(3, 5).toInt())
-    LocalContext.current.startActivity(intent)
-}
+//gestion de la sonnerie des Alarmes
 private var mediaPlayer: MediaPlayer? = null
-
-fun playRingtoneAtTime(context: Context, hour: Int, minute: Int) {
-    val now = Calendar.getInstance()
-    val targetTime = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, hour)
-        set(Calendar.MINUTE, minute)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    // Si l'heure ciblée est dans le passé, on ajoute un jour pour programmer la sonnerie le lendemain
-    if (targetTime.timeInMillis < now.timeInMillis) {
-        targetTime.add(Calendar.DAY_OF_YEAR, 1)
-    }
-
-    val delay = targetTime.timeInMillis - now.timeInMillis
-    Handler(Looper.getMainLooper()).postDelayed({
-        mediaPlayer = MediaPlayer.create(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
-        mediaPlayer?.isLooping = true
-        mediaPlayer?.start()
-    }, delay)
-
-}
 
 fun stopRingtone() {
     mediaPlayer?.stop()
@@ -339,8 +299,12 @@ fun playAudioAtTime(context: Context, hour: Int, minute: Int) {
 
     val delay = targetTime.timeInMillis - now.timeInMillis
     Handler(Looper.getMainLooper()).postDelayed({
-        var mediaPlayer = MediaPlayer.create(context, R.raw.audio)
+        val mediaPlayer = MediaPlayer.create(context, R.raw.audio)
         mediaPlayer?.start()
+
+        val message = "Il est $hour:$minute ! \n c'est l'heure d'aller Prier";
+        val createNotification = CreateNotification(context, "Heure de Prierre", message)
+        createNotification.showNotification()
     }, delay)
 }
 
