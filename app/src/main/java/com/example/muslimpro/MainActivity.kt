@@ -122,9 +122,6 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewModel) {
     var currentAlarm by remember { mutableStateOf<AlarmEntity?>(null) }
     //INSTANCE DE LA ABSE DE DONNEE
-    val database  = Database(LocalContext.current)
-//    val alarmDao = AlarmDatabase.getInstance(LocalContext.current).alarmDao()
-//    var data = AlarmRepository(alarmDao, LocalContext.current)
     // Define a CoroutineScope for the database operations
     val dbScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -143,16 +140,6 @@ fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewMod
             alarmRepository.getAlarms()
         }
     }
-
-//    val alarmListLiveData : LiveData<List<AlarmEntity>> = data.getAlarms()
-//
-////    recuperer la liste des alarm depuis la base de donnnées
-//    var alarmList by remember {
-//        mutableStateOf(
-////                data.getAlarms()
-//            alarmListLiveData.value ?: emptyList()
-//        )
-//    }
 
     // gestion de la sonnerie
     val now = Calendar.getInstance()
@@ -184,10 +171,6 @@ fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewMod
             alarms = alarms.value.sortedBy { LocalTime.parse(it.time) },
 
             onAlarmDelete = { alarm ->
-//                alarmList = alarmList.filter { it.id != alarm.id }
-//                dbScope.launch {
-//                    alarmRepository.deleteAlarm(alarm.id)
-//                }
                 dbScope.launch {
                     alarmRepository.deleteAlarm(alarm.id)
                     val updatedList = alarmRepository.getAlarms().value ?: emptyList()
@@ -197,12 +180,6 @@ fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewMod
                 }
             },
             onAlarmUpdate = { updatedAlarm ->
-//                alarmList = alarmList.map { alarm ->
-//                    if (alarm.id == updatedAlarm.id) updatedAlarm else alarm
-//                }
-//                dbScope.launch {
-//                    alarmRepository.updateAlarm(updatedAlarm)
-//                }
                 dbScope.launch {
                     alarmRepository.updateAlarm(updatedAlarm)
                     val updatedList = alarmRepository.getAlarms().value ?: emptyList()
