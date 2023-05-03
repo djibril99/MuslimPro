@@ -77,7 +77,6 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     MyApp {
-//                        MyScreenContent()
                         MyScreenContent(viewModel.alarms, viewModel)
                     }
                 }
