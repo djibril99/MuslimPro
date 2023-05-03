@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
@@ -89,7 +90,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp(content: @Composable (PaddingValues) -> Unit) {
-    val myImage = painterResource(R.drawable.ic_launcher_background)
+    val myImage = painterResource(R.drawable.logo)
     MaterialTheme {
         Scaffold(
             topBar = {
@@ -102,14 +103,18 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
                             )
                         }
                     },
-                    title = { Text(text = stringResource(R.string.app_name)) },
+                    title = {
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            fontFamily = FontFamily.Serif
+                        )
+                    },
                 )
             },
             content = content
         )
     }
 }
-
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -129,9 +134,9 @@ fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewMod
 
     // recuperer la liste des alarm depuis la base de donnnées
 
-        var alarmList by remember {
-            mutableStateOf(emptyList<AlarmEntity>())
-        }
+    var alarmList by remember {
+        mutableStateOf(emptyList<AlarmEntity>())
+    }
 
     LaunchedEffect(true) {
         val alarms = withContext(Dispatchers.IO) {
@@ -217,6 +222,7 @@ fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewMod
         )
     }
 }
+
 
 // la liste des Alarmes , pour chaqu'un lorsque la ligne est selectionner , une boite de dialogue s'ouvre pour la modification
 // et lorsque l'icon de poubelle est appuyée, l'alarme sera supprimer
