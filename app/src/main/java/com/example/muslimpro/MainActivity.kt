@@ -1,6 +1,7 @@
 package com.example.muslimpro
 
 
+import android.annotation.SuppressLint
 import android.app.TimePickerDialog
 import android.content.Context
 import android.media.MediaPlayer
@@ -28,11 +29,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.example.muslimpro.ui.theme.MuslimProTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -40,7 +43,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModelProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 import java.time.LocalTime
@@ -49,11 +58,15 @@ import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var viewModel: AlarmViewModel
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+
+        viewModel = ViewModelProvider(this)[AlarmViewModel::class.java]
+
         setContent {
             MuslimProTheme {
                 // A surface container using the 'background' color from the theme
@@ -63,7 +76,8 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     MyApp {
-                        MyScreenContent()
+//                        MyScreenContent()
+                        MyScreenContent(viewModel.alarms, viewModel)
                     }
                 }
             }
@@ -97,18 +111,43 @@ fun MyApp(content: @Composable (PaddingValues) -> Unit) {
 }
 
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MyScreenContent() {
-    var currentAlarm by remember { mutableStateOf<Alarm?>(null) }
+fun MyScreenContent(alarms: LiveData<List<AlarmEntity>>, viewModel: AlarmViewModel) {
+    var currentAlarm by remember { mutableStateOf<AlarmEntity?>(null) }
     //INSTANCE DE LA ABSE DE DONNEE
     val database  = Database(LocalContext.current)
-    //recuperer la liste des alarm depuis la base de donnnées
-    var alarmList by remember {
-        mutableStateOf(
-                database.getAllAlarms()
-        )
+//    val alarmDao = AlarmDatabase.getInstance(LocalContext.current).alarmDao()
+//    var data = AlarmRepository(alarmDao, LocalContext.current)
+    // Define a CoroutineScope for the database operations
+    val dbScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+// Instantiate the DAO and repository inside the scope
+    val alarmDao = AlarmDatabase.getInstance(LocalContext.current).alarmDao()
+    val alarmRepository = AlarmRepository(alarmDao, LocalContext.current)
+
+    // recuperer la liste des alarm depuis la base de donnnées
+
+        var alarmList by remember {
+            mutableStateOf(emptyList<AlarmEntity>())
+        }
+
+    LaunchedEffect(true) {
+        val alarms = withContext(Dispatchers.IO) {
+            alarmRepository.getAlarms()
+        }
     }
+
+//    val alarmListLiveData : LiveData<List<AlarmEntity>> = data.getAlarms()
+//
+////    recuperer la liste des alarm depuis la base de donnnées
+//    var alarmList by remember {
+//        mutableStateOf(
+////                data.getAlarms()
+//            alarmListLiveData.value ?: emptyList()
+//        )
+//    }
 
     // gestion de la sonnerie
     val now = Calendar.getInstance()
@@ -134,40 +173,60 @@ fun MyScreenContent() {
 
         Text(text = "Liste des alarmes")
 
+        val alarms = alarms.observeAsState(emptyList())
+
         AlarmList(
-            alarms = alarmList.sortedBy { LocalTime.parse(it.time) },
+            alarms = alarms.value.sortedBy { LocalTime.parse(it.time) },
 
             onAlarmDelete = { alarm ->
-                alarmList = alarmList.filter { it.id != alarm.id }
-                database.deleteAlarm(alarm.id)
+//                alarmList = alarmList.filter { it.id != alarm.id }
+//                dbScope.launch {
+//                    alarmRepository.deleteAlarm(alarm.id)
+//                }
+                dbScope.launch {
+                    alarmRepository.deleteAlarm(alarm.id)
+                    val updatedList = alarmRepository.getAlarms().value ?: emptyList()
+                    withContext(Dispatchers.Main) {
+                        alarmList = updatedList.filter { it.id != alarm.id }
+                    }
+                }
             },
             onAlarmUpdate = { updatedAlarm ->
-                alarmList = alarmList.map { alarm ->
-                    if (alarm.id == updatedAlarm.id) updatedAlarm else alarm
+//                alarmList = alarmList.map { alarm ->
+//                    if (alarm.id == updatedAlarm.id) updatedAlarm else alarm
+//                }
+//                dbScope.launch {
+//                    alarmRepository.updateAlarm(updatedAlarm)
+//                }
+                dbScope.launch {
+                    alarmRepository.updateAlarm(updatedAlarm)
+                    val updatedList = alarmRepository.getAlarms().value ?: emptyList()
+                    withContext(Dispatchers.Main) {
+                        alarmList = updatedList.map { if (it.id == updatedAlarm.id) updatedAlarm else it }
+                    }
                 }
-                database.updateAlarm(updatedAlarm)
-
             }
         )
-        AddAlarmButton(onAddAlarm = { time ->
-                val newAlarm = database.addAlarm(time)
-                alarmList = alarmList + newAlarm
-            //supprimer ceci
-
-
-
-        })
+        AddAlarmButton(
+            onAddAlarm = { time ->
+                dbScope.launch {
+                    val newAlarm = alarmRepository.addAlarm(time)
+                    alarmList = alarmList + newAlarm
+                }
+            }
+        )
     }
 }
+
 // la liste des Alarmes , pour chaqu'un lorsque la ligne est selectionner , une boite de dialogue s'ouvre pour la modification
 // et lorsque l'icon de poubelle est appuyée, l'alarme sera supprimer
 // le switch nous permettra d act  viter ou de desactiver l'alarme
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AlarmList(alarms: List<Alarm>, onAlarmDelete: (Alarm) -> Unit, onAlarmUpdate: (Alarm) -> Unit) {
+fun AlarmList(alarms: List<AlarmEntity>, onAlarmDelete: (AlarmEntity) -> Unit, onAlarmUpdate: (AlarmEntity) -> Unit) {
 
-    var selectedAlarm by remember { mutableStateOf<Alarm?>(null) }
+    var selectedAlarm by remember { mutableStateOf<AlarmEntity?>(null) }
 
     LazyColumn(
         contentPadding = PaddingValues(top = 16.dp)
@@ -302,7 +361,7 @@ fun playAudioAtTime(context: Context, hour: Int, minute: Int) {
         val mediaPlayer = MediaPlayer.create(context, R.raw.audio)
         mediaPlayer?.start()
 
-        val message = "Il est $hour:$minute ! \n c'est l'heure d'aller Prier";
+        val message = "Il est $hour:$minute ! \n c'est l'heure d'aller Prier"
         val createNotification = CreateNotification(context, "Heure de Prierre", message)
         createNotification.showNotification()
     }, delay)

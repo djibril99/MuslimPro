@@ -6,5 +6,5 @@ import androidx.lifecycle.LiveData
 
 class AlarmViewModel(application: Application) : AndroidViewModel(application) {
     private val alarmDao: AlarmDao = AlarmDatabase.getInstance(application).alarmDao()
-    val alarms: List<Alarm> = alarmDao.getAlarms()
+    val alarms: LiveData<List<AlarmEntity>> = alarmDao.getAlarms()
 }
